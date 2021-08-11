@@ -109,65 +109,87 @@ impl CommandExec for CreateSpellArgs {
             school: "Maaagic!".to_owned(),
             spell_level: SpellLevel::Cantrip,
             needs_preperation: false,
-            range: SpellRange::Melee,
             is_ritual: false,
             group: "A group".to_owned(),
-            actions: vec![
-                SpellAction::Cast {
-                    cast: SpellRange::Melee,
+            actions: SpellActions {
+                attacks: vec![SpellRange {
+                    range: AttackRange::Melee,
+                    save: ToSave::DC
                 },
-                SpellAction::Cast {
-                    cast: SpellRange::IsSelf,
-                },
-                SpellAction::Cast {
-                    cast: SpellRange::Touch,
-                },
-                SpellAction::Cast {
-                    cast: SpellRange::Ranged,
-                },
-                SpellAction::Damage {
-                    damage: vec![SpellDamage {
-                        stat: SpellStat::Charisma,
-                        damage_type: "slashing".to_owned(),
-                        dice: vec![Dice {
-                            dice_type: "d4".to_owned(),
-                            count: 1,
+                SpellRange {
+                    range: AttackRange::Ranged,
+                    save: ToSave::DC
+                }],
+                saves: vec![
+                    SpellSave {
+                            is_magic: false,
+                            stat: SpellStat::AbilityScore {
+                                ability: AbilityScore::Charisma,
+                            },
+                            save: ToSave::DC,
+                        },
+                    SpellSave {
+                            is_magic: false,
+                            stat: SpellStat::AbilityScore {
+                                ability: AbilityScore::Charisma,
+                            },
+                            save: ToSave::Ability(CustomSpellSave {
+                                bonus: 1,
+                                stat: SpellStat::AbilityScore {
+                                    ability: AbilityScore::Charisma,
+                                },
+                                is_proficient: true,
+                            }),
+                        },
+                ],
+                damages: vec![
+                    ActionDamage {
+                        damage: vec![SpellDamage {
+                            modifier: DamageModifier::AbilityScore { ability: AbilityScore::Constitution },
+                            damage_type: "slashing".to_owned(),
+                            dice: vec![Dice {
+                                dice_type: "d4".to_owned(),
+                                count: 1,
+                            }],
                         }],
-                    }],
-                },
-                SpellAction::Effect(SpellEffect {
-                    effect: "SAVE: CON DC 10; DMG: 4d4".to_owned(),
+                    }
+                ],
+                effects: vec![
+
+                SpellEffect {
+                    effect: "DMG: 4d4".to_owned(),
                     duration: SpellEffectDuration {
                         count: 1,
                         unit: TimeUnit::Minute,
                     },
                     targets_self: true,
-                }),
-                SpellAction::Effect(SpellEffect {
-                    effect: "SAVE: CON DC 10; DMG: 4d4".to_owned(),
+                },
+                SpellEffect {
+                    effect: "DMG: 4d4".to_owned(),
                     duration: SpellEffectDuration {
                         count: 1,
                         unit: TimeUnit::Round,
                     },
                     targets_self: false,
-                }),
-                SpellAction::Effect(SpellEffect {
-                    effect: "SAVE: CON DC 10; DMG: 4d4".to_owned(),
+                },
+                SpellEffect {
+                    effect: "DMG: 4d4".to_owned(),
                     duration: SpellEffectDuration {
                         count: 1,
                         unit: TimeUnit::Hour,
                     },
                     targets_self: true,
-                }),
-                SpellAction::Effect(SpellEffect {
-                    effect: "SAVE: CON DC 10; DMG: 4d4".to_owned(),
+                },
+                SpellEffect {
+                    effect: "DMG: 4d4".to_owned(),
                     duration: SpellEffectDuration {
                         count: 1,
                         unit: TimeUnit::Minute,
                     },
                     targets_self: false,
-                }),
-            ],
+                },
+                ]
+            }
         };
 
         let text = serde_yaml::to_string(&spell_def)?;
@@ -232,7 +254,7 @@ impl CommandExec for BuildModuleArgs {
             spells,
             tables,
         };
-        
+
         fgu_module.process(&self.output)?;
 
         Ok(())

@@ -2,6 +2,37 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering;
 
 #[derive(Debug, Serialize, Deserialize)]
+
+pub enum AbilityScore {
+    #[serde(rename = "str")]
+    Strength,
+    #[serde(rename = "dex")]
+    Dextarity,
+    #[serde(rename = "con")]
+    Constitution,
+    #[serde(rename = "int")]
+    Intelligence,
+    #[serde(rename = "wis")]
+    Wisdom,
+    #[serde(rename = "cha")]
+    Charisma,
+}
+
+impl AbilityScore {
+    pub fn to_long_name(&self) -> String {
+        match self {
+            AbilityScore::Strength => "strength",
+            AbilityScore::Dextarity => "dextarity",
+            AbilityScore::Constitution => "constitution",
+            AbilityScore::Intelligence => "intelligence",
+            AbilityScore::Wisdom => "wisdom",
+            AbilityScore::Charisma => "charisma",
+        }
+        .to_owned()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum SpellCastDuration {
     Instant,
@@ -11,6 +42,7 @@ pub enum SpellCastDuration {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum TimeUnit {
     Round,
     Minute,
@@ -31,30 +63,56 @@ pub enum SpellLevel {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "lowercase")]
-pub enum SpellRange {
+#[serde(rename_all = "lowercase")]
+pub enum AttackRange {
     Melee,
     Ranged,
-    Touch,
-    #[serde(rename = "self")]
-    IsSelf,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "stat")]
+#[serde(rename_all = "kebab-case")]
+pub struct SpellRange {
+    pub range: AttackRange,
+    pub save: ToSave
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SpellSave {
+    pub is_magic: bool,
+    pub stat: SpellStat,
+    pub save: ToSave,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum SpellStat {
-    #[serde(rename = "str")]
-    Strength,
-    #[serde(rename = "dex")]
-    Dextarity,
-    #[serde(rename = "con")]
-    Constitution,
-    #[serde(rename = "int")]
-    Intelligence,
-    #[serde(rename = "wis")]
-    Wisdom,
-    #[serde(rename = "cha")]
-    Charisma,
+    #[serde(rename = "ability-score")]
+    AbilityScore { ability: AbilityScore },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct CustomSpellSave {
+    pub stat: SpellStat,
+    pub is_proficient: bool,
+    #[serde(skip, default = "Default::default")]
+    pub bonus: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum ToSave {
+    Fixed { value: u8 },
+    DC,
+    Ability(CustomSpellSave),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "damage-mod")]
+pub enum DamageModifier {
+    #[serde(rename = "ability-score")]
+    AbilityScore { ability: AbilityScore },
     #[serde(rename = "none")]
     None,
 }
@@ -69,8 +127,7 @@ pub struct Dice {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SpellDamage {
-    #[serde(flatten)]
-    pub stat: SpellStat,
+    pub modifier: DamageModifier,
     pub damage_type: String,
     pub dice: Vec<Dice>,
 }
@@ -85,11 +142,17 @@ pub struct SpellEffect {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-#[serde(untagged)]
-pub enum SpellAction {
-    Cast { cast: SpellRange },
-    Damage { damage: Vec<SpellDamage> },
-    Effect(SpellEffect),
+pub struct ActionDamage {
+    pub damage: Vec<SpellDamage>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SpellActions {
+    pub attacks: Vec<SpellRange>,
+    pub saves: Vec<SpellSave>,
+    pub damages: Vec<ActionDamage>,
+    pub effects: Vec<SpellEffect>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -105,10 +168,9 @@ pub struct SpellDefinition {
     pub school: String,
     pub spell_level: SpellLevel,
     pub needs_preperation: bool,
-    pub range: SpellRange,
     pub is_ritual: bool,
     pub group: String,
-    pub actions: Vec<SpellAction>,
+    pub actions: SpellActions
 }
 
 fn create_spell_id() -> u8 {
