@@ -1,9 +1,10 @@
 use crate::module::inputs::*;
 use super::*;
+use tracing::trace;
 
 impl SpellDefinition {
     pub fn process(&self, module: &ModuleDefinition, w: &XmlBuilder) -> Result<(), anyhow::Error> {
-        let id = format!("id-{:05}", self.id);
+        let id = format!("id-{:05}", self.id.get_id());
 
         w.child(&id, vec![], |builder| {
             self.casting_time(&builder)?;
@@ -63,6 +64,7 @@ impl SpellDefinition {
             SpellCastDuration::BonusAction { count } => format!("{} bonus action", count),
             SpellCastDuration::Action { count } => format!("{} action", count),
             SpellCastDuration::Instant => "instant".to_owned(),
+            SpellCastDuration::Forever => "forever".to_owned(),
         };
 
         w.write_string("castingtime", vec![XmlAttribute::string()], casting_time)
@@ -78,6 +80,7 @@ impl SpellDefinition {
     }
 
     fn actions(&self, w: &XmlBuilder) -> Result<(), anyhow::Error> {
+        trace!("Actions: {:?}", self.actions);
         w.child("actions", vec![], |builder| {
             let mut count = 1;
             for action in &self.actions.attacks {
@@ -191,18 +194,20 @@ fn process_effect(effect: &SpellEffect, w: &XmlBuilder) -> Result<(), anyhow::Er
     w.write_string("type", vec![XmlAttribute::string()], "effect")?;
     w.write_string("label", vec![XmlAttribute::string()], &effect.effect)?;
 
-    let duration_unit = match effect.duration.unit {
-        TimeUnit::Minute => "minute".to_owned(),
-        TimeUnit::Hour => "hour".to_owned(),
-        TimeUnit::Round => "round".to_owned(),
-    };
+    if let SpellEffectDuration::Finite(duration) = &effect.duration {
+        let duration_unit = match duration.unit {
+            TimeUnit::Minute => "minute".to_owned(),
+            TimeUnit::Hour => "hour".to_owned(),
+            TimeUnit::Round => "round".to_owned(),
+        };
 
-    w.write_string("durunit", vec![XmlAttribute::string()], duration_unit)?;
-    w.write_string(
-        "durmod",
-        vec![XmlAttribute::number()],
-        effect.duration.count,
-    )?;
+        w.write_string("durunit", vec![XmlAttribute::string()], duration_unit)?;
+        w.write_string(
+            "durmod",
+            vec![XmlAttribute::number()],
+            duration.count,
+        )?;
+    }
     Ok(())
 }
 

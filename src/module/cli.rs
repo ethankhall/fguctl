@@ -94,7 +94,7 @@ pub struct CreateSpellArgs {
 impl CommandExec for CreateSpellArgs {
     async fn exec(&self) -> Result<(), anyhow::Error> {
         let spell_def: SpellDefinition = SpellDefinition {
-            id: 1,
+            id: SpellId::default(),
             name: self.name.clone(),
             short_description: Option::from("Something simple".to_owned()),
             duration: Option::from("1 minuite".to_owned()),
@@ -158,34 +158,28 @@ impl CommandExec for CreateSpellArgs {
 
                 SpellEffect {
                     effect: "DMG: 4d4".to_owned(),
-                    duration: SpellEffectDuration {
+                    duration: SpellEffectDuration::Finite(SpellEffectDurationFinite {
                         count: 1,
                         unit: TimeUnit::Minute,
-                    },
+                    }),
                     targets_self: true,
                 },
                 SpellEffect {
                     effect: "DMG: 4d4".to_owned(),
-                    duration: SpellEffectDuration {
+                    duration: SpellEffectDuration::Finite(SpellEffectDurationFinite {
                         count: 1,
                         unit: TimeUnit::Round,
-                    },
+                    }),
                     targets_self: false,
                 },
                 SpellEffect {
                     effect: "DMG: 4d4".to_owned(),
-                    duration: SpellEffectDuration {
-                        count: 1,
-                        unit: TimeUnit::Hour,
-                    },
+                    duration: SpellEffectDuration::Indefinite,
                     targets_self: true,
                 },
                 SpellEffect {
                     effect: "DMG: 4d4".to_owned(),
-                    duration: SpellEffectDuration {
-                        count: 1,
-                        unit: TimeUnit::Minute,
-                    },
+                    duration: SpellEffectDuration::Indefinite,
                     targets_self: false,
                 },
                 ]

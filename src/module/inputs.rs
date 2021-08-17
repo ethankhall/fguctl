@@ -7,7 +7,7 @@ pub enum AbilityScore {
     #[serde(rename = "str")]
     Strength,
     #[serde(rename = "dex")]
-    Dextarity,
+    Dexterity,
     #[serde(rename = "con")]
     Constitution,
     #[serde(rename = "int")]
@@ -22,7 +22,7 @@ impl AbilityScore {
     pub fn to_long_name(&self) -> String {
         match self {
             AbilityScore::Strength => "strength",
-            AbilityScore::Dextarity => "dextarity",
+            AbilityScore::Dexterity => "dexterity",
             AbilityScore::Constitution => "constitution",
             AbilityScore::Intelligence => "intelligence",
             AbilityScore::Wisdom => "wisdom",
@@ -33,12 +33,13 @@ impl AbilityScore {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "lowercase")]
+#[serde(tag = "type", rename_all = "kebab-case")]
 pub enum SpellCastDuration {
     Instant,
     Reaction,
     BonusAction { count: u8 },
     Action { count: u8 },
+    Forever
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,9 +51,16 @@ pub enum TimeUnit {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SpellEffectDuration {
+pub struct SpellEffectDurationFinite {
     pub count: u8,
     pub unit: TimeUnit,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "time-scale", rename_all = "lowercase")]
+pub enum SpellEffectDuration {
+    Finite(SpellEffectDurationFinite),
+    Indefinite
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -149,17 +157,21 @@ pub struct ActionDamage {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SpellActions {
+    #[serde(default = "Default::default")]
     pub attacks: Vec<SpellRange>,
+    #[serde(default = "Default::default")]
     pub saves: Vec<SpellSave>,
+    #[serde(default = "Default::default")]
     pub damages: Vec<ActionDamage>,
+    #[serde(default = "Default::default")]
     pub effects: Vec<SpellEffect>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SpellDefinition {
-    #[serde(skip, default = "create_spell_id")]
-    pub id: u8,
+    #[serde(skip, default = "Default::default")]
+    pub id: SpellId,
     pub name: String,
     pub short_description: Option<String>,
     pub description: String,
@@ -173,8 +185,23 @@ pub struct SpellDefinition {
     pub actions: SpellActions
 }
 
-fn create_spell_id() -> u8 {
-    super::SPELL_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
+#[derive(Debug)]
+pub struct SpellId {
+    value: u8
+}
+
+impl SpellId {
+    pub fn get_id(&self) -> u8 {
+        self.value
+    }
+}
+
+impl Default for SpellId {
+    fn default() -> Self {
+        Self {
+            value: super::SPELL_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
