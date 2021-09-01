@@ -13,6 +13,10 @@ pub enum ModuleSubCommand {
     #[clap(name = "build")]
     BuildModule(BuildModuleArgs),
 
+    /// Create a new module
+    #[clap(name = "init-module")]
+    CreateModule(CreateModuleArgs),
+
     /// Create a new spell file, fully populated
     #[clap(name = "create-spell")]
     CreateSpell(CreateSpellArgs),
@@ -29,6 +33,7 @@ impl CommandExec for ModuleSubCommand {
             ModuleSubCommand::BuildModule(args) => args.exec().await,
             ModuleSubCommand::CreateSpell(args) => args.exec().await,
             ModuleSubCommand::CreateTable(args) => args.exec().await,
+            ModuleSubCommand::CreateModule(args) => args.exec().await,
         }
     }
 }
@@ -64,6 +69,42 @@ impl CommandExec for CreateTableArgs {
             ],
             description: "A simple table".to_owned(),
             formatted_text: None,
+        };
+
+        let text = serde_yaml::to_string(&table_def)?;
+        let mut f = File::create(&self.output_file)?;
+        f.write_all(text.as_bytes())?;
+
+        info!(
+            "Wrote file {}. You will need to add it to your module definition.",
+            self.output_file
+        );
+
+        Ok(())
+    }
+}
+
+#[derive(Clap, Debug)]
+pub struct CreateModuleArgs {
+    /// Where to write the file
+    #[clap(long = "output", short = 'o')]
+    pub output_file: String,
+
+    /// Name of your module
+    #[clap(long = "name")]
+    pub name: String,
+}
+
+#[async_trait]
+impl CommandExec for CreateModuleArgs {
+    async fn exec(&self) -> Result<(), anyhow::Error> {
+        let table_def = ModuleDefinition {
+             name: self.name.clone(),
+             spell_files: Vec::new(),
+             table_files: Vec::new(),
+             source: self.name.clone(),
+             category: ModuleCategory::SourceBook,
+             author: "Your name here".to_owned(),
         };
 
         let text = serde_yaml::to_string(&table_def)?;

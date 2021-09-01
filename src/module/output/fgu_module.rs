@@ -55,7 +55,7 @@ impl FGUModule {
             },
         )?;
 
-        xml_builder.to_string()
+        xml_builder.into_string()
     }
 
     fn client_file(&self) -> Result<String, anyhow::Error> {
@@ -197,6 +197,6 @@ impl FGUModule {
             },
         )?;
 
-        xml_builder.to_string()
+        xml_builder.into_string()
     }
 }

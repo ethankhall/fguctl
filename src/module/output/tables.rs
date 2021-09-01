@@ -6,7 +6,7 @@ impl TableDefinition {
         let note_text = self
             .formatted_text
             .as_ref()
-            .map(|x| x.clone())
+            .cloned()
             .unwrap_or_default();
         let note_text = markdown::to_html(&note_text);
         let id = format!("id-{:05}", self.id);

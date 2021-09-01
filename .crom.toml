@@ -1,0 +1,14 @@
+pattern = 'v0.1.%d'
+message-template = "Created {version} for release."
+
+[cargo]
+
+[artifact.mac]
+paths = {clu = "mac/fguctl"}
+compress = { name = "fguctl-mac.tar.gz", format = "tgz" }
+target = "GitHub"
+
+[artifact.linux]
+paths = {fguctl = "linux/fguctl"}
+compress = { name = "fguctl-linux.tar.gz", format = "tgz" }
+target = "GitHub"

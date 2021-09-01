@@ -88,7 +88,7 @@ impl XmlBuilder {
             real_writer.write_event(Event::Start(elem))?;
         }
 
-        fun(&self)?;
+        fun(self)?;
 
         {
             let mut real_writer = self.writer.lock().unwrap();
@@ -159,7 +159,7 @@ impl XmlBuilder {
         })
     }
 
-    fn to_string(self) -> Result<String, anyhow::Error> {
+    fn into_string(self) -> Result<String, anyhow::Error> {
         let real_writer = self.writer.into_inner().unwrap();
         Ok(String::from_utf8(real_writer.into_inner())?)
     }

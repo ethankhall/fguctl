@@ -250,5 +250,4 @@ pub struct ModuleDefinition {
     pub source: String,
     pub category: ModuleCategory,
     pub author: String,
-    pub ruleset: RuleSet,
 }

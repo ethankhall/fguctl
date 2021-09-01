@@ -7,10 +7,10 @@ impl SpellDefinition {
         let id = format!("id-{:05}", self.id.get_id());
 
         w.child(&id, vec![], |builder| {
-            self.casting_time(&builder)?;
-            self.description(&builder)?;
-            self.duration(&builder)?;
-            self.spell_level(&builder)?;
+            self.casting_time(builder)?;
+            self.description(builder)?;
+            self.duration(builder)?;
+            self.spell_level(builder)?;
             builder.write_string("locked", vec![XmlAttribute::number()], "1")?;
             builder.write_string("name", vec![XmlAttribute::string()], &self.name)?;
             builder.write_string(
@@ -34,7 +34,7 @@ impl SpellDefinition {
             }
             builder.write_string("group", vec![XmlAttribute::string()], &self.group.clone())?;
             builder.write_string("source", vec![XmlAttribute::string()], &module.name.clone())?;
-            self.actions(&builder)?;
+            self.actions(builder)?;
 
             Ok(())
         })?;
